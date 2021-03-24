@@ -2,6 +2,16 @@
 
 Unit tests for code that calls exit, exec, system or qx()
 
+# SYNOPSIS
+
+# DESCRIPTION
+
+# FUNCTIONS
+
+## exec\_arrayref
+
+## never\_exec\_ok
+
 # AUTHOR
 
 Graham Ollis <plicease@cpan.org>
