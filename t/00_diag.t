@@ -10,9 +10,12 @@ my %modules;
 my $post_diag;
 
 $modules{$_} = $_ for qw(
+  Class::Tiny
   ExtUtils::MakeMaker
+  Ref::Util
   Scope::Upper
   Test2::API
+  Test2::Tools::Compare
   Test2::V0
 );
 
