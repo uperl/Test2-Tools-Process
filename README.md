@@ -2,6 +2,18 @@
 
 Unit tests for code that calls exit, exec, system or qx()
 
+# SYNOPSIS
+
+# DESCRIPTION
+
+# FUNCTIONS
+
+## process
+
+# CHECKS
+
+## EXIT
+
 # AUTHOR
 
 Graham Ollis <plicease@cpan.org>

@@ -30,10 +30,12 @@ The concept was implementation was based on L<Test::Exit>, but applied to C<exec
 
 our @EXPORT = qw( exec_arrayref never_exec_ok );
 
-our $exec_handler = sub {
-  CORE::exec(@_);
-};
+our $exec_handler;
+
 BEGIN {
+  my $orig = \&CORE::exec;
+  $exec_handler = sub { $orig->(@_) };
+  no warnings 'redefine';
   *CORE::GLOBAL::exec = sub { $exec_handler->(@_) };
 }
 
