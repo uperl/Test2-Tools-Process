@@ -52,6 +52,7 @@ BEGIN {
 
  my $ok = process { ... } \@events, $test_name;
  my $ok = process { ... } \@events;
+ my $ok = process { ... } $test_name;
  my $ok = process { ... };
 
 =cut
