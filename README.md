@@ -69,10 +69,16 @@ my $ok = process { ... };
 
 ```perl
 process { ... } [
-  proc_event($type => $check, $callback);
-  proc_event($type => $check);
-  proc_event($type => $callback);
-  proc_event($type);
+  proc_event($type => $check, $callback),
+  proc_event($type => $check),
+  proc_event($type => $callback),
+  proc_event($type),
+
+  # additional result checks for `system` events
+  proc_event('system' => $check, \%result_check, $callback),
+  proc_event('system' => \%result_check, $callback),
+  proc_event('system' => $check, \%result_check),
+  proc_event('system' => \%result_check),
 ];
 ```
 

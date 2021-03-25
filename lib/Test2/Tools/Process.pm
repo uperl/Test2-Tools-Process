@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Test2::Tools::Compare ();
 use Test2::API qw( context );
-use Ref::Util qw( is_plain_arrayref is_ref is_plain_coderef );
+use Ref::Util qw( is_plain_arrayref is_ref is_plain_coderef is_plain_hashref );
 use Carp qw( croak );
 use Test2::Compare::Array     ();
 use Test2::Compare::Wildcard  ();
@@ -122,18 +122,22 @@ sub process (&;@)
     $handlers{system} = sub {
       my $expected = $expected[$i++];
 
+      my $event;
       if(@_ == 1 || @_ == 0)
       {
-        push @events, { event_type => 'system', command => $_[0] };
+        push @events, $event = { event_type => 'system', command => $_[0] };
       }
       else
       {
-        push @events, { event_type => 'system', command => [@_] };
+        push @events, $event = { event_type => 'system', command => [@_] };
       }
 
       if(defined $expected && $expected->is_system && defined $expected->callback)
       {
-        return $expected->callback(@_);
+        $expected->callback(@_);
+        $event->{status} = 0;
+        $? = 0;
+        return 0;
       }
       else
       {
@@ -143,7 +147,20 @@ sub process (&;@)
           chomp $message;
           Carp::carp($message);
         };
-        CORE::system(@_);
+        my $ret = CORE::system(@_);
+        if($ret == -1)
+        {
+          $event->{error} = $!;
+        }
+        elsif($? & 127)
+        {
+          $event->{signal} = $? & 127;
+        }
+        else
+        {
+          $event->{status} = $? >> 8;
+        }
+        return $ret;
       }
     };
 
@@ -164,10 +181,16 @@ sub process (&;@)
 =head2 proc_event
 
  process { ... } [
-   proc_event($type => $check, $callback);
-   proc_event($type => $check);
-   proc_event($type => $callback);
-   proc_event($type);
+   proc_event($type => $check, $callback),
+   proc_event($type => $check),
+   proc_event($type => $callback),
+   proc_event($type),
+
+   # additional result checks for `system` events
+   proc_event('system' => $check, \%result_check, $callback),
+   proc_event('system' => \%result_check, $callback),
+   proc_event('system' => $check, \%result_check),
+   proc_event('system' => \%result_check),
  ];
 
 The C<proc_event> function creates a process event, with an optional check and callback.  How the
@@ -233,15 +256,17 @@ TODO
 
 =cut
 
-sub proc_event ($;$$)
+sub proc_event ($;$$$)
 {
   my $type = shift;
   croak("no such process event undef") unless defined $type;
 
   my $check;
+  my $check2;
   my $callback;
 
-  $check = shift unless defined $_[0] && is_plain_coderef $_[0];
+  $check  = shift unless defined $_[0] && (is_plain_coderef $_[0] || is_plain_hashref $_[0]);
+  $check2 = shift if defined $_[0] && is_plain_hashref $_[0];
 
   if(defined $_[0])
   {
@@ -324,10 +349,15 @@ sub proc_event ($;$$)
       );
     }
 
+    if($type eq 'system')
+    {
+      $check2 ||= { status => 0 };
+    }
+
     my $class = $type eq 'exec'
       ? 'Test2::Tools::Process::Exec'
       : 'Test2::Tools::Process::System';
-    return $class->new( command_check => $check, callback => $callback);
+    return $class->new( command_check => $check, result_check => $check2, callback => $callback);
   }
 
   croak("no such process event $type");
@@ -368,12 +398,12 @@ package Test2::Tools::Process::System;
 
 use constant is_system => 1;
 use base qw( Test2::Tools::Process::Event );
-use Class::Tiny qw( command_check );
+use Class::Tiny qw( command_check result_check );
 
 sub to_check
 {
   my($self) = @_;
-  { event_type => 'system', command => $self->command_check };
+  { event_type => 'system', command => $self->command_check, %{ $self->result_check } };
 }
 
 package Test2::Tools::Process::ReturnMultiLevel;
