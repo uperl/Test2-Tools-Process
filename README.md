@@ -12,7 +12,22 @@ process {
   exit 2;
   note 'not executed';
 } [
-  proc_event exit => match qr/^[2-3]$/,
+  # can use any Test2 checks on the exit status
+  proc_event(exit => match qr/^[2-3]$/),
+];
+
+process {
+  exit 4;
+} [
+  # or you can just check that the exit status matches numerically
+  proc_event(exit => 4),
+];
+
+process {
+  exit 5;
+} [
+  # or just check that we called exit.
+  proc_event('exit'),
 ];
 
 process {
@@ -131,13 +146,31 @@ events will actually make a system call, unless a `$callback` is provided.
 The `exit` emulation, doesn't call `END` callbacks or other destructors, since
 you aren't really terminating the process.
 
+This module installs handlers for `exec`, `exit`, `system` and `readpipe`, in
+the `CORE::GLOBAL` namespace, so if your code is also installing handlers there
+then things might not work.
+
+# SEE ALSO
+
+- [Test::Exit](https://metacpan.org/pod/Test::Exit)
+
+    Simple `exit` emulation for tests.  The most recent version does not rely on exceptions.
+
+- [Test::Exec](https://metacpan.org/pod/Test::Exec)
+
+    Like [Test::Exit](https://metacpan.org/pod/Test::Exit), but for `exec`
+
+- [Test::Mock::Cmd](https://metacpan.org/pod/Test::Mock::Cmd)
+
+    Provides an interface to mocking `system`, `qx` and `exec`.
+
 # AUTHOR
 
 Graham Ollis <plicease@cpan.org>
 
 # COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2021 by Graham Ollis.
+This software is copyright (c) 2015-2021 by Graham Ollis.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.
