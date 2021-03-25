@@ -39,7 +39,7 @@ allow_leading_tabs = 0
 [CodeLayout::RequireConsistentNewlines]
 [ControlStructures::ProhibitLabelsWithSpecialBlockNames]
 [ControlStructures::ProhibitMutatingListFunctions]
-[ControlStructures::ProhibitUnreachableCode]
+;[ControlStructures::ProhibitUnreachableCode]
 [InputOutput::ProhibitBarewordFileHandles]
 [InputOutput::ProhibitJoinedReadline]
 [InputOutput::ProhibitTwoArgOpen]

@@ -12,11 +12,7 @@ use base 'Exporter';
 
 =head1 SYNOPSIS
 
- use Test::More;
- use Test::Exec;
- 
- is_deeply exec_arrayref { exec 'foo', 'bar', 'baz' }, [qw( foo bar baz )], 'found exec!';
- is exec_arrayref { }, undef, 'did not exec!';
+# EXAMPLE: t/test_exec__synopsis.t
 
 =head1 DESCRIPTION
 

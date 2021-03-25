@@ -21,6 +21,7 @@ $modules{$_} = $_ for qw(
   Test2::Compare::String
   Test2::Tools::Compare
   Test2::V0
+  Test::More
 );
 
 
