@@ -89,7 +89,14 @@ sub process (&;@)
 
       if(defined $expected && $expected->is_exit && defined $expected->callback)
       {
-        return $expected->callback->($return, $status);
+        my $proc = Test2::Tools::Process::Proc->new($return);
+        my $ret = $expected->callback->($proc, $status);
+        if(exists $proc->{errno})
+        {
+          $! = $proc->{errno};
+          return 0;
+        }
+        return $ret;
       }
       else
       {
@@ -111,7 +118,14 @@ sub process (&;@)
 
       if(defined $expected && $expected->is_exec && defined $expected->callback)
       {
-        return $expected->callback->($return, @_);
+        my $proc = Test2::Tools::Process::Proc->new($return);
+        my $ret = $expected->callback->($proc, @_);
+        if(exists $proc->{errno})
+        {
+          $! = $proc->{errno};
+          return 0;
+        }
+        return $ret;
       }
       else
       {
@@ -210,12 +224,12 @@ If no callback is provided then an C<exit> will be emulated by terminating the p
 executing any more code.  The rest of the test will then proceed.
 
  proc_event( exit => sub {
-   my($return, $status) = @_;
-   $return->();
+   my($proc, $status) = @_;
+   $proc->terminate;
  });
 
-The callback takes a C<$return> callback and a C<$status> value.  C<exit> shouldn't ever fail so you
-probably don't want to forget to call C<$return>.
+The callback takes a C<$proc> object and a C<$status> value.  Normally C<exit> should never
+return, so what you want to do is call the C<terminate> method on the C<$proc> object.
 
 =item exec
 
@@ -227,25 +241,24 @@ If no callback is provided then a (successful) C<exec> will be emulated by termi
 block without executing any more code.  The rest of the test will then proceed.
 
  proc_event( exec => sub {
-   my($return, @command) = @_;
+   my($proc, @command) = @_;
    ...;
  });
 
-The callback takes a C<$return> callback and the arguments passed to C<exec> as C<@command>.  You
-can emulate a failed C<exit> by returning C<0> and setting C<$!>:
+The callback takes a C<$proc> object and the arguments passed to C<exec> as C<@command>.  You
+can emulate a failed C<exec> by using the C<fail> method on the C<$proc> object:
 
  proc_event( exec => sub {
-   my($return, @command) = @_;
-   $! = 2;
-   return 0;
+   my($proc, @command) = @_;
+   $proc->fail(2); # this is the errno value
  });
 
-To emulate a successful C<exec> call you want to just remember to call the C<$return> callback at
-the end of your callback.
+To emulate a successful C<exec> call you want to just remember to call the C<terminate> method on
+the C<$proc> object.
 
  proc_event( exec => sub {
-   my($return, @command) = @_;
-   $return->();
+   my($proc, @command) = @_;
+   $proc->terminate;
  });
 
 =item system
@@ -404,6 +417,24 @@ sub to_check
 {
   my($self) = @_;
   { event_type => 'system', command => $self->command_check, %{ $self->result_check } };
+}
+
+package Test2::Tools::Process::Proc;
+
+sub new
+{
+  my($class, $return) = @_;
+  bless {
+    return => $return,
+  }, $class;
+}
+
+sub terminate { shift->{return}->() }
+
+sub fail
+{
+  my($self, $errno) = @_;
+  $self->{errno} = $errno;
 }
 
 package Test2::Tools::Process::ReturnMultiLevel;
