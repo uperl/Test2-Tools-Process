@@ -263,7 +263,37 @@ the C<$proc> object.
 
 =item system
 
-TODO
+A process event for C<system>, C<piperead> and C<qx//>.  The first check (as with C<exec>) is against
+the command string passed to C<system>.  The second is a hash reference with result checks.
+
+=over 4
+
+=item status
+
+ proc_event( system => { status => $check } );
+
+The normal termination status.  This is usually the value passed to C<exit> in the program called.  Typically
+a program that succeeded will return zero (C<0>) and a failed on will return non-zero.
+
+=item error
+
+ proc_event( system => { error => $check } );
+
+The C<errno> or C<$!> value if the system call failed.  Most commonly this is for bad command names, but it
+could be something else like running out of memory or other system resources.
+
+=item signal
+
+ proc_event( system => { signal => $check } );
+
+Set if the process was killed by a signal.
+
+=back
+
+Only one check should be included because only one of these is usually valid.  If you do not provide this check,
+then it will check that the status code is zero only.
+
+# TODO: callback
 
 =back
 

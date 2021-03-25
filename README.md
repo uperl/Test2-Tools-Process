@@ -144,7 +144,39 @@ events will actually make a system call, unless a `$callback` is provided.
 
 - system
 
-    TODO
+    A process event for `system`, `piperead` and `qx//`.  The first check (as with `exec`) is against
+    the command string passed to `system`.  The second is a hash reference with result checks.
+
+    - status
+
+        ```perl
+        proc_event( system => { status => $check } );
+        ```
+
+        The normal termination status.  This is usually the value passed to `exit` in the program called.  Typically
+        a program that succeeded will return zero (`0`) and a failed on will return non-zero.
+
+    - error
+
+        ```perl
+        proc_event( system => { error => $check } );
+        ```
+
+        The `errno` or `$!` value if the system call failed.  Most commonly this is for bad command names, but it
+        could be something else like running out of memory or other system resources.
+
+    - signal
+
+        ```perl
+        proc_event( system => { signal => $check } );
+        ```
+
+        Set if the process was killed by a signal.
+
+    Only one check should be included because only one of these is usually valid.  If you do not provide this check,
+    then it will check that the status code is zero only.
+
+    \# TODO: callback
 
 # CAVEATS
 
