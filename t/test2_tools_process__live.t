@@ -11,9 +11,9 @@ process {
 ], 'normal';
 
 process {
-  system 'false';
+  system q{bash -c 'exit 22'};
 } [
-  proc_event('system' => 'false', { status => 1 }),
+  proc_event('system' => q{bash -c 'exit 22'}, { status => 22 }),
 ], 'return non-zero';
 
 process {
