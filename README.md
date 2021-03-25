@@ -20,13 +20,13 @@ process {
   exec 'baz';
   note 'not executed';
 } [
+  # emulate first exec as failed
   proc_event(exec => match qr/^foo\b/, sub {
     my($return, @command) = @_;
-    # emulate a failed exec
     $! = 2;
     return 0;
   }),
-  # the second exec will be emulated
+  # the second exec will be emulated as successful
   proc_event('exec'),
 ];
 
