@@ -22,14 +22,10 @@ process {
   proc_event('system' => 'bogus', { error => D() }),
 ], 'bad command';
 
-my $todo = todo 'signals test not working';
-
 process {
-  capture_merged { system q{bash -c 'kill $$'} };
+  capture_merged { system 'bash', -c => 'kill -9 $$' };
 } [
   proc_event('system' => { signal => 9 }),
 ], 'signal';
-
-$todo->end;
 
 done_testing;
