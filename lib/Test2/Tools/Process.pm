@@ -6,9 +6,11 @@ use Test2::Tools::Compare ();
 use Test2::API qw( context );
 use Ref::Util qw( is_plain_arrayref is_ref is_plain_coderef );
 use Carp qw( croak );
-use Test2::Compare::Number ();
-use Test2::Compare::String ();
-use Test2::Compare::Custom ();
+use Test2::Compare::Array     ();
+use Test2::Compare::Wildcard  ();
+use Test2::Compare::Number    ();
+use Test2::Compare::String    ();
+use Test2::Compare::Custom    ();
 use Test2::Compare ();
 use 5.008004;
 use base qw( Exporter );
@@ -258,7 +260,19 @@ sub proc_event ($;$$)
     {
       if(is_plain_arrayref $check)
       {
-        ...;
+        my $array = Test2::Compare::Array->new(
+          called => \@caller,
+        );
+        foreach my $item (@$check)
+        {
+          my $wc = Test2::Compare::Wildcard->new(
+            expect => $item,
+            file   => $caller[1],
+            lines  => [$caller[2]],
+          );
+          $array->add_item($wc);
+        }
+        $check = $array;
       }
       elsif(!is_ref $check)
       {

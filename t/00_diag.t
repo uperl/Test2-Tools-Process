@@ -16,9 +16,11 @@ $modules{$_} = $_ for qw(
   Scope::Upper
   Test2::API
   Test2::Compare
+  Test2::Compare::Array
   Test2::Compare::Custom
   Test2::Compare::Number
   Test2::Compare::String
+  Test2::Compare::Wildcard
   Test2::Tools::Compare
   Test2::V0
   Test::More

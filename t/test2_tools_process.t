@@ -93,9 +93,9 @@ subtest 'exec' => sub {
     }),
   ];
 
-#  process { exec 'hi', 'bye' } [
-#    proc_event(exec => ['hi','bye']),
-#  ];
+  process { exec 'hi', 'bye' } [
+    proc_event(exec => ['hi','bye']),
+  ];
 
   is
     intercept { process { note 'nothing' } [ proc_event 'exec' ] },
@@ -144,6 +144,18 @@ subtest 'exec' => sub {
       event 'Fail';
     },
     'fail 5',
+  ;
+
+  is
+    intercept {
+      process { exec 'hi', 'bye' } [
+        proc_event(exec => ['bye','hi']),
+      ];
+    },
+    array {
+      event 'Fail';
+    },
+    'fail 6',
   ;
 
 };
