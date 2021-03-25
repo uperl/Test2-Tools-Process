@@ -40,8 +40,8 @@ subtest 'exit' => sub {
 
   process {
     $ret1  = exit 2;
-    $ret2  = exit 3; ## no critic(ControlStructures::ProhibitUnreachableCode)
-    $ret3  = exit;   ## no critic(ControlStructures::ProhibitUnreachableCode)
+    $ret2  = exit 3;
+    $ret3  = exit;
   } [
     proc_event( exit => 2, sub { return -42 }),
     proc_event( exit => sub { return -43 }),

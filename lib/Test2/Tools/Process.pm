@@ -20,6 +20,8 @@ our @EXPORT = qw( process proc_event );
 
 =head1 SYNOPSIS
 
+# EXAMPLE: t/test2_tools_process__synopsis.t
+
 =head1 DESCRIPTION
 
 TODO
@@ -102,7 +104,7 @@ sub process (&;@)
 
       my $expected = $expected[$i++];
 
-      if(defined $expected && $expected->is_exit && defined $expected->callback)
+      if(defined $expected && $expected->is_exec && defined $expected->callback)
       {
         return $expected->callback->($return, @_);
       }
@@ -178,7 +180,7 @@ can emulate a failed C<exit> by returning C<0> and setting C<$!>:
 
  proc_event( exec => sub {
    my($return, @command) = @_;
-   $! = "oops!";
+   $! = 2;
    return 0;
  });
 
