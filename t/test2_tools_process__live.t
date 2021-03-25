@@ -19,7 +19,7 @@ process {
 process {
   capture_merged { system 'bogus' };
 } [
-  proc_event('system' => 'bogus', { error => D() }),
+  proc_event('system' => 'bogus', { errno => D() }),
 ], 'bad command';
 
 process {
