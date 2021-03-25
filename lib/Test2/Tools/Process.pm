@@ -77,17 +77,19 @@ sub process (&;@)
   Test2::Tools::Process::ReturnMultiLevel::with_return(sub {
     my($return) = @_;
 
-    local $handlers{exit} = sub (;$) {
+    local %handlers = %handlers;
+
+    $handlers{exit} = sub (;$) {
       my $expected = $expected[$i++];
 
-      my $code = shift;
-      $code = 0 unless defined $code;
-      $code = int($code);
-      push @events, { event_type => 'exit', exit_code => $code };
+      my $status = shift;
+      $status = 0 unless defined $status;
+      $status = int($status);
+      push @events, { event_type => 'exit', exit_status => $status };
 
       if(defined $expected && $expected->is_exit && defined $expected->callback)
       {
-        return $expected->callback->($return, $code);
+        return $expected->callback->($return, $status);
       }
       else
       {
@@ -95,7 +97,9 @@ sub process (&;@)
       }
     };
 
-    local $handlers{exec} = sub {
+    $handlers{exec} = sub {
+      my $expected = $expected[$i++];
+
       if(@_ == 1 || @_ == 0)
       {
         push @events, { event_type => 'exec', command => $_[0] };
@@ -105,8 +109,6 @@ sub process (&;@)
         push @events, { event_type => 'exec', command => [@_] };
       }
 
-      my $expected = $expected[$i++];
-
       if(defined $expected && $expected->is_exec && defined $expected->callback)
       {
         return $expected->callback->($return, @_);
@@ -114,6 +116,34 @@ sub process (&;@)
       else
       {
         $return->();
+      }
+    };
+
+    $handlers{system} = sub {
+      my $expected = $expected[$i++];
+
+      if(@_ == 1 || @_ == 0)
+      {
+        push @events, { event_type => 'system', command => $_[0] };
+      }
+      else
+      {
+        push @events, { event_type => 'system', command => [@_] };
+      }
+
+      if(defined $expected && $expected->is_system && defined $expected->callback)
+      {
+        return $expected->callback(@_);
+      }
+      else
+      {
+        local $SIG{__WARN__} = sub {
+          my($message) = @_;
+          $message =~ s/ at .*? line [0-9]+\.$//;
+          chomp $message;
+          Carp::carp($message);
+        };
+        CORE::system(@_);
       }
     };
 
@@ -251,10 +281,10 @@ sub proc_event ($;$$)
       );
     }
 
-    return Test2::Tools::Process::Exit->new(code_check => $check, callback => $callback);
+    return Test2::Tools::Process::Exit->new(status_check => $check, callback => $callback);
   }
 
-  elsif($type eq 'exec')
+  elsif($type =~ /^(exec|system)$/)
   {
     if(defined $check)
     {
@@ -294,8 +324,10 @@ sub proc_event ($;$$)
       );
     }
 
-    return Test2::Tools::Process::Exec->new( command_check => $check, callback => $callback);
-
+    my $class = $type eq 'exec'
+      ? 'Test2::Tools::Process::Exec'
+      : 'Test2::Tools::Process::System';
+    return $class->new( command_check => $check, callback => $callback);
   }
 
   croak("no such process event $type");
@@ -312,12 +344,12 @@ package Test2::Tools::Process::Exit;
 
 use constant is_exit => 1;
 use base qw( Test2::Tools::Process::Event );
-use Class::Tiny qw( code_check );
+use Class::Tiny qw( status_check );
 
 sub to_check
 {
   my($self) = @_;
-  { event_type => 'exit', exit_code => $self->{code_check} };
+  { event_type => 'exit', exit_status => $self->status_check };
 }
 
 package Test2::Tools::Process::Exec;
@@ -329,7 +361,19 @@ use Class::Tiny qw( command_check );
 sub to_check
 {
   my($self) = @_;
-  { event_type => 'exec', command => $self->{command_check} };
+  { event_type => 'exec', command => $self->command_check };
+}
+
+package Test2::Tools::Process::System;
+
+use constant is_system => 1;
+use base qw( Test2::Tools::Process::Event );
+use Class::Tiny qw( command_check );
+
+sub to_check
+{
+  my($self) = @_;
+  { event_type => 'system', command => $self->command_check };
 }
 
 package Test2::Tools::Process::ReturnMultiLevel;
