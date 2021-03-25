@@ -98,13 +98,13 @@ events will actually make a system call, unless a `$callback` is provided.
 
     ```perl
     proc_event( exit => sub {
-      my($return, $status) = @_;
-      $return->();
+      my($proc, $status) = @_;
+      $proc->terminate;
     });
     ```
 
-    The callback takes a `$return` callback and a `$status` value.  `exit` shouldn't ever fail so you
-    probably don't want to forget to call `$return`.
+    The callback takes a `$proc` object and a `$status` value.  Normally `exit` should never
+    return, so what you want to do is call the `terminate` method on the `$proc` object.
 
 - exec
 
@@ -117,29 +117,28 @@ events will actually make a system call, unless a `$callback` is provided.
 
     ```perl
     proc_event( exec => sub {
-      my($return, @command) = @_;
+      my($proc, @command) = @_;
       ...;
     });
     ```
 
-    The callback takes a `$return` callback and the arguments passed to `exec` as `@command`.  You
-    can emulate a failed `exit` by returning `0` and setting `$!`:
+    The callback takes a `$proc` object and the arguments passed to `exec` as `@command`.  You
+    can emulate a failed `exec` by using the `fail` method on the `$proc` object:
 
     ```perl
     proc_event( exec => sub {
-      my($return, @command) = @_;
-      $! = 2;
-      return 0;
+      my($proc, @command) = @_;
+      $proc->fail(2); # this is the errno value
     });
     ```
 
-    To emulate a successful `exec` call you want to just remember to call the `$return` callback at
-    the end of your callback.
+    To emulate a successful `exec` call you want to just remember to call the `terminate` method on
+    the `$proc` object.
 
     ```perl
     proc_event( exec => sub {
-      my($return, @command) = @_;
-      $return->();
+      my($proc, @command) = @_;
+      $proc->terminate;
     });
     ```
 
