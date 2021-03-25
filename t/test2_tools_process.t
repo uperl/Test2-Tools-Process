@@ -3,7 +3,7 @@ use Test2::Tools::Process;
 
 subtest 'export' => sub {
   imported_ok 'process';
-  imported_ok 'EXIT';
+  imported_ok 'proc_event';
 };
 
 subtest 'basic' => sub {
@@ -31,7 +31,7 @@ subtest 'exit' => sub {
   process {
     exit;
   } [
-    EXIT(number(0)),
+    proc_event exit => number(0),
   ];
 
   my $ret1;
@@ -41,15 +41,15 @@ subtest 'exit' => sub {
     $ret1  = exit 2;
     $ret2  = exit;   ## no critic(ControlStructures::ProhibitUnreachableCode)
   } [
-    EXIT(2, sub { return -42 }),
-    EXIT(0),
+    proc_event( exit => 2, sub { return -42 }),
+    proc_event( exit => 0),
   ];
 
   is $ret1, -42;
   is $ret2, U();
 
   is
-    intercept { process { exit 2 } [ EXIT(3) ] },
+    intercept { process { exit 2 } [ proc_event exit => 3 ] },
     array {
       event 'Fail';
       end;
@@ -58,8 +58,9 @@ subtest 'exit' => sub {
   ;
 
   is
-    intercept { process { exit 2 } [ EXIT(3) ] },
+    intercept { process { note 'nothing' } [ proc_event 'exit' ] },
     array {
+      event 'Note';
       event 'Fail';
       etc;
     },
@@ -69,5 +70,3 @@ subtest 'exit' => sub {
 };
 
 done_testing;
-
-
