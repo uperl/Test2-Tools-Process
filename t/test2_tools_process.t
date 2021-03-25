@@ -160,4 +160,85 @@ subtest 'exec' => sub {
 
 };
 
+subtest 'system' => sub {
+
+  my $n = sub {};
+
+  process {
+    system;
+    system 'hi';
+    system 'hi', 'bye';
+    system 'hi', 'bye';
+  } [
+    proc_event(system => U(), $n),
+    proc_event(system => 'hi', $n),
+    proc_event(system => array {
+      item 'hi';
+      item match qr/^b/;
+    }, $n),
+    proc_event(system => ['hi','bye'], $n),
+  ];
+
+  is
+    intercept { process { note 'nothing' } [ proc_event 'system', $n ] },
+    array {
+      event 'Note';
+      event 'Fail';
+    },
+    'fail 1',
+  ;
+
+  is
+    intercept { process { system; } [ proc_event 'system' => D(), $n ] },
+    array {
+      event 'Fail';
+    },
+    'fail 2',
+  ;
+
+  is
+    intercept { process { system 'hi'; } [ proc_event 'system' => 'bye', $n ] },
+    array {
+      event 'Fail';
+    },
+    'fail 3',
+  ;
+
+  is
+    intercept { process { system 'bye'; } [ proc_event 'system' => match qr/^h/, $n ] },
+    array {
+      event 'Fail';
+    },
+    'fail 4',
+  ;
+
+  is
+    intercept {
+      process { system 'hi', 'bye' } [
+        proc_event(system => array {
+          item 'hi';
+          item match qr/^x/;
+          end;
+        }, $n),
+      ];
+    },
+    array {
+      event 'Fail';
+    },
+    'fail 5',
+  ;
+
+  is
+    intercept {
+      process { system 'hi', 'bye' } [
+        proc_event(system => ['bye','hi'], $n),
+      ];
+    },
+    array {
+      event 'Fail';
+    },
+    'fail 6',
+  ;
+};
+
 done_testing;
