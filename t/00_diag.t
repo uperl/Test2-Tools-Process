@@ -15,6 +15,10 @@ $modules{$_} = $_ for qw(
   Ref::Util
   Scope::Upper
   Test2::API
+  Test2::Compare
+  Test2::Compare::Custom
+  Test2::Compare::Number
+  Test2::Compare::String
   Test2::Tools::Compare
   Test2::V0
 );
