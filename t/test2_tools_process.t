@@ -1,9 +1,11 @@
 use Test2::V0 -no_srand => 1;
 use Test2::Tools::Process;
+use Config;
 
 subtest 'export' => sub {
   imported_ok 'process';
   imported_ok 'proc_event';
+  imported_ok 'named_signal';
 };
 
 subtest 'basic' => sub {
@@ -249,6 +251,8 @@ subtest 'system' => sub {
       is $?, 2560;
       is system('signal'), 9;
       is $?, 9;
+      is system('signal'), 9;
+      is $?, 9;
       is system('bogus'), -1;
       note "errno = $!";
       is $!, number(2);
@@ -268,6 +272,12 @@ subtest 'system' => sub {
         my($proc, @args) = @_;
         $proc->signal(9);
       }),
+      proc_event(system => { signal => 9 }, sub {
+        my($proc, @args) = @_;
+        eval { $proc->signal('bogus') };
+        note "exception = $@";
+        $proc->signal('KILL');
+      }),
       proc_event(system => { errno => number(2) }, sub {
         my($proc, @args) = @_;
         $proc->errno(2);
@@ -276,6 +286,16 @@ subtest 'system' => sub {
 
 
   };
+
+};
+
+subtest 'named signal' => sub {
+
+  foreach my $name (split /\s+/, $Config{sig_name})
+  {
+    my $value = named_signal($name);
+    is $value, match qr/^[0-9]+$/, "named_signal($name) = $value";
+  }
 
 };
 

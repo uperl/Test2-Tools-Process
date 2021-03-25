@@ -15,7 +15,8 @@ use Test2::Compare ();
 use 5.008004;
 use base qw( Exporter );
 
-our @EXPORT = qw( process proc_event );
+our @EXPORT = qw( process proc_event named_signal );
+our @CARP_NOT = qw( Test2::Tools::Process::SystemProc );
 
 # ABSTRACT: Unit tests for code that calls exit, exec, system or qx()
 # VERSION
@@ -194,6 +195,39 @@ sub process (&;@)
   );
 
   goto \&Test2::Tools::Compare::is;
+}
+
+=head2 named_signal
+
+ my $signame = named_signal $name;
+
+Given a string signal name like C<KILL>, this will return the integer
+signal number.  It will throw an exception if the C<$name> is invalid.
+
+=cut
+
+{
+  my $sig;
+  sub named_signal ($)
+  {
+    my($name) = @_;
+
+    # build hash on demand.
+    $sig ||= do {
+      require Config;
+      my %sig;
+      my @num = split /\s+/, $Config::Config{sig_num};
+      foreach my $name (split /\s+/, $Config::Config{sig_name})
+      {
+        $sig{$name} = shift @num;
+      }
+      \%sig;
+    };
+
+    croak "no such signal: $name" unless exists $sig->{$name};
+
+    $sig->{$name};
+  }
 }
 
 =head1 CHECKS
@@ -497,9 +531,15 @@ sub exit
 sub signal
 {
   my($self, $signal) = @_;
-  # TODO: handle named signals via $Config{sig_name} and $Config{sig_num}
   $signal = 0 unless defined $signal;
-  $signal = int $signal;
+  if($signal =~ /^[A-Z]/i)
+  {
+    $signal = Test2::Tools::Process::named_signal($signal);
+  }
+  else
+  {
+    $signal = int $signal;
+  }
   $self->{result}->{signal} = $signal;
   $? = $signal;
   $self->{return}->();

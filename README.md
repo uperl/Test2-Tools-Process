@@ -63,6 +63,15 @@ my $ok = process { ... } $test_name;
 my $ok = process { ... };
 ```
 
+## named\_signal
+
+```perl
+my $signame = named_signal $name;
+```
+
+Given a string signal name like `KILL`, this will return the integer
+signal number.  It will throw an exception if the `$name` is invalid.
+
 # CHECKS
 
 ## proc\_event
