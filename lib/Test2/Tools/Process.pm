@@ -5,7 +5,7 @@ use warnings;
 use Test2::Tools::Compare ();
 use Test2::API qw( context );
 use Ref::Util qw( is_plain_arrayref is_ref is_plain_coderef is_plain_hashref );
-use Carp qw( croak );
+use Carp qw( croak carp );
 use Test2::Compare::Array     ();
 use Test2::Compare::Wildcard  ();
 use Test2::Compare::Number    ();
@@ -145,10 +145,10 @@ sub process (&;@)
           my($message) = @_;
           $message =~ s/ at .*? line [0-9]+\.$//;
           chomp $message;
-          Carp::carp($message);
+          carp($message);
         };
         my $ret = CORE::system(@_);
-        if($ret == -1)
+        if($? == -1)
         {
           $event->{error} = $!;
         }
@@ -412,7 +412,7 @@ package Test2::Tools::Process::ReturnMultiLevel;
 # we can remove this when it gets a maintainer again.
 
 use Scope::Upper;
-use Carp qw( confess );
+use Carp ();
 use base qw( Exporter );
 our @EXPORT_OK = qw( with_return );
 
