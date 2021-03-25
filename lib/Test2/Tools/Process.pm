@@ -374,4 +374,26 @@ sub with_return (&)
 The C<exit> emulation, doesn't call C<END> callbacks or other destructors, since
 you aren't really terminating the process.
 
+This module installs handlers for C<exec>, C<exit>, C<system> and C<readpipe>, in
+the C<CORE::GLOBAL> namespace, so if your code is also installing handlers there
+then things might not work.
+
+=head1 SEE ALSO
+
+=over 4
+
+=item L<Test::Exit>
+
+Simple C<exit> emulation for tests.  The most recent version does not rely on exceptions.
+
+=item L<Test::Exec>
+
+Like L<Test::Exit>, but for C<exec>
+
+=item L<Test::Mock::Cmd>
+
+Provides an interface to mocking C<system>, C<qx> and C<exec>.
+
+=back
+
 =cut

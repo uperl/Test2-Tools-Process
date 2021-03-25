@@ -5,7 +5,22 @@ process {
   exit 2;
   note 'not executed';
 } [
-  proc_event exit => match qr/^[2-3]$/,
+  # can use any Test2 checks on the exit status
+  proc_event(exit => match qr/^[2-3]$/),
+];
+
+process {
+  exit 4;
+} [
+  # or you can just check that the exit status matches numerically
+  proc_event(exit => 4),
+];
+
+process {
+  exit 5;
+} [
+  # or just check that we called exit.
+  proc_event('exit'),
 ];
 
 process {
