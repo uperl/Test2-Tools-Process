@@ -12,7 +12,7 @@ Unit tests for code that calls exit, exec, system or qx()
 
 # CHECKS
 
-## EXIT
+## proc\_event
 
 # AUTHOR
 

@@ -5,10 +5,11 @@ use warnings;
 use Test2::Tools::Compare ();
 use Test2::API qw( context );
 use Ref::Util qw( is_plain_arrayref is_ref );
+use Carp qw( croak );
 use 5.008004;
 use base qw( Exporter );
 
-our @EXPORT = qw( process EXIT );
+our @EXPORT = qw( process proc_event );
 
 # ABSTRACT: Unit tests for code that calls exit, exec, system or qx()
 # VERSION
@@ -75,7 +76,7 @@ sub process (&;@)
       my $code = shift;
       $code = 0 unless defined $code;
       $code = int($code);
-      push @events, ['exit', $code];
+      push @events, { event_type => 'exit', exit_code => $code };
 
       if(defined $expected && $expected->is_exit && defined $expected->callback)
       {
@@ -101,39 +102,46 @@ sub process (&;@)
 
 =head1 CHECKS
 
-=head2 EXIT
+=head2 proc_event
 
 =cut
 
-sub EXIT (;$$)
+sub proc_event ($;$$)
 {
-  my($check, $callback) = @_;
+  my($type, $check, $callback) = @_;
 
-  my @caller = caller;
+  croak("no such process event undef") unless defined $type;
 
-  if(defined $check && !is_ref $check)
+  if($type eq 'exit')
   {
-    unless(is_ref $check)
+    my @caller = caller;
+
+    if(defined $check && !is_ref $check)
     {
-      $check = Test2::Compare::Number->new(
+      unless(is_ref $check)
+      {
+        $check = Test2::Compare::Number->new(
+          file => $caller[1],
+          lines => [$caller[2]],
+          input => $check,
+        );
+      }
+    }
+    else
+    {
+      $check = Test2::Compare::Custom->new(
+        code     => sub { defined $_ ? 1 : 0 },
+        name     => 'DEFINED',
+        operator => 'DEFINED()',
         file => $caller[1],
         lines => [$caller[2]],
-        input => $check,
       );
     }
-  }
-  else
-  {
-    $check = Test2::Compare::Custom->new(
-      code     => sub { defined $_ ? 1 : 0 },
-      name     => 'DEFINED',
-      operator => 'DEFINED()',
-      file => $caller[1],
-      lines => [$caller[2]],
-    );
+
+    return Test2::Tools::Process::Exit->new(code_check => $check, callback => $callback);
   }
 
-  Test2::Tools::Process::Exit->new(code_check => $check, callback => $callback);
+  croak("no such process event $type");
 }
 
 package Test2::Tools::Process::Event;
@@ -152,7 +160,7 @@ use Class::Tiny qw( code_check );
 sub to_check
 {
   my($self) = @_;
-  ['exit', $self->{code_check} ];
+  { event_type => 'exit', exit_code => $self->{code_check} };
 }
 
 package Test2::Tools::Process::ReturnMultiLevel;
