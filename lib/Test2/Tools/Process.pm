@@ -137,6 +137,7 @@ sub process (&;@)
       my $expected = $expected[$i++];
 
       my $event;
+      my $args = \@_;
       if(@_ == 1 || @_ == 0)
       {
         push @events, $event = { event_type => 'system', command => $_[0] };
@@ -148,10 +149,15 @@ sub process (&;@)
 
       if(defined $expected && $expected->is_system && defined $expected->callback)
       {
-        $expected->callback(@_);
-        $event->{status} = 0;
-        $? = 0;
-        return 0;
+        Test2::Tools::Process::ReturnMultiLevel::with_return(sub {
+          my($return) = @_;
+          my $proc = Test2::Tools::Process::SystemProc->new($return, $event);
+          $expected->callback->($proc, @$args);
+          $event->{status} = 0;
+          $? = 0;
+        });
+        return -1 if exists $event->{errno};
+        return $?;
       }
       else
       {
@@ -164,7 +170,7 @@ sub process (&;@)
         my $ret = CORE::system(@_);
         if($? == -1)
         {
-          $event->{error} = $!;
+          $event->{errno} = $!;
         }
         elsif($? & 127)
         {
@@ -199,7 +205,7 @@ sub process (&;@)
    proc_event($type => $check),
    proc_event($type => $callback),
    proc_event($type),
-
+ 
    # additional result checks for `system` events
    proc_event('system' => $check, \%result_check, $callback),
    proc_event('system' => \%result_check, $callback),
@@ -246,11 +252,11 @@ block without executing any more code.  The rest of the test will then proceed.
  });
 
 The callback takes a C<$proc> object and the arguments passed to C<exec> as C<@command>.  You
-can emulate a failed C<exec> by using the C<fail> method on the C<$proc> object:
+can emulate a failed C<exec> by using the C<errno> method on the C<$proc> object:
 
  proc_event( exec => sub {
    my($proc, @command) = @_;
-   $proc->fail(2); # this is the errno value
+   $proc->errno(2); # this is the errno value
  });
 
 To emulate a successful C<exec> call you want to just remember to call the C<terminate> method on
@@ -275,9 +281,9 @@ the command string passed to C<system>.  The second is a hash reference with res
 The normal termination status.  This is usually the value passed to C<exit> in the program called.  Typically
 a program that succeeded will return zero (C<0>) and a failed on will return non-zero.
 
-=item error
+=item errno
 
- proc_event( system => { error => $check } );
+ proc_event( system => { errno => $check } );
 
 The C<errno> or C<$!> value if the system call failed.  Most commonly this is for bad command names, but it
 could be something else like running out of memory or other system resources.
@@ -308,7 +314,7 @@ sub proc_event ($;$$$)
   my $check2;
   my $callback;
 
-  $check  = shift unless defined $_[0] && (is_plain_coderef $_[0] || is_plain_hashref $_[0]);
+  $check  = shift if defined $_[0] && !is_plain_coderef $_[0] && !is_plain_hashref $_[0];
   $check2 = shift if defined $_[0] && is_plain_hashref $_[0];
 
   if(defined $_[0])
@@ -461,10 +467,51 @@ sub new
 
 sub terminate { shift->{return}->() }
 
-sub fail
+sub errno
 {
   my($self, $errno) = @_;
   $self->{errno} = $errno;
+}
+
+package Test2::Tools::Process::SystemProc;
+
+sub new
+{
+  my($class, $return, $result) = @_;
+  bless {
+    return => $return,
+    result => $result,
+  }, $class;
+}
+
+sub exit
+{
+  my($self, $status) = @_;
+  $status = 0 unless defined $status;
+  $status = int $status;
+  $self->{result}->{status} = $status;
+  $? = $status << 8;
+  $self->{return}->();
+}
+
+sub signal
+{
+  my($self, $signal) = @_;
+  # TODO: handle named signals via $Config{sig_name} and $Config{sig_num}
+  $signal = 0 unless defined $signal;
+  $signal = int $signal;
+  $self->{result}->{signal} = $signal;
+  $? = $signal;
+  $self->{return}->();
+}
+
+sub errno
+{
+  my($self, $errno) = @_;
+  $errno = 0 unless defined $errno;
+  $errno = int $errno;
+  $self->{result}->{errno} = $! = $errno;
+  $self->{return}->();
 }
 
 package Test2::Tools::Process::ReturnMultiLevel;

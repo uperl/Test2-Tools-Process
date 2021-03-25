@@ -239,6 +239,44 @@ subtest 'system' => sub {
     },
     'fail 6',
   ;
+
+  subtest 'emulation' => sub {
+
+    process {
+      is system('hi'), 0;
+      is $?, 0;
+      is system('false','two','three'), 2560;
+      is $?, 2560;
+      is system('signal'), 9;
+      is $?, 9;
+      is system('bogus'), -1;
+      note "errno = $!";
+      is $!, number(2);
+    } [
+      proc_event(system => sub {
+        my($proc, @args) = @_;
+        isa_ok $proc, 'Test2::Tools::Process::SystemProc';
+        is \@args, ['hi'];
+        $proc->exit;
+      }),
+      proc_event(system => { status => 10 }, sub {
+        my($proc, @args) = @_;
+        is \@args, ['false','two','three'];
+        $proc->exit(10);
+      }),
+      proc_event(system => { signal => 9 }, sub {
+        my($proc, @args) = @_;
+        $proc->signal(9);
+      }),
+      proc_event(system => { errno => number(2) }, sub {
+        my($proc, @args) = @_;
+        $proc->errno(2);
+      }),
+    ];
+
+
+  };
+
 };
 
 done_testing;

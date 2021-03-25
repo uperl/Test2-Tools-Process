@@ -123,12 +123,12 @@ events will actually make a system call, unless a `$callback` is provided.
     ```
 
     The callback takes a `$proc` object and the arguments passed to `exec` as `@command`.  You
-    can emulate a failed `exec` by using the `fail` method on the `$proc` object:
+    can emulate a failed `exec` by using the `errno` method on the `$proc` object:
 
     ```perl
     proc_event( exec => sub {
       my($proc, @command) = @_;
-      $proc->fail(2); # this is the errno value
+      $proc->errno(2); # this is the errno value
     });
     ```
 
@@ -156,10 +156,10 @@ events will actually make a system call, unless a `$callback` is provided.
         The normal termination status.  This is usually the value passed to `exit` in the program called.  Typically
         a program that succeeded will return zero (`0`) and a failed on will return non-zero.
 
-    - error
+    - errno
 
         ```perl
-        proc_event( system => { error => $check } );
+        proc_event( system => { errno => $check } );
         ```
 
         The `errno` or `$!` value if the system call failed.  Most commonly this is for bad command names, but it
