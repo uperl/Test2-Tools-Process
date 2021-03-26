@@ -27,7 +27,13 @@ our @CARP_NOT = qw( Test2::Tools::Process::SystemProc );
 
 =head1 DESCRIPTION
 
-TODO
+This set of testing tools is intended for writing unit tests for code that interacts
+with other processes without using real processes that might have unwanted side effects.
+It also lets you test code that exits program flow without actually terminating your
+test.  So far it allows you to test and/or mock C<exit>, C<exec>, C<system>, 
+C<readpipe> and C<qx//>.  Other process related tests will be added in the future.
+
+This module borrows some ideas from L<Test::Exit>.
 
 =cut
 
@@ -333,7 +339,56 @@ Set if the process was killed by a signal.
 Only one check should be included because only one of these is usually valid.  If you do not provide this check,
 then it will check that the status code is zero only.
 
-# TODO: callback
+By default the actual system call will be made, but if you provide a callback you can simulate commands, which
+is helpful in unit testing your script without having to call external programs which may have unwanted side effects.
+
+ proc_event( system => sub {
+   my($proc, @command) = @_;
+   ...
+ });
+
+Like the C<exec> event, C<@command> contains the full command passed to the C<system> call.  You can use the
+C<$proc> object to simulate one of three different results:
+
+=over 4
+
+=item exit
+
+ $proc->exit($status);
+ $proc->exit;
+
+Exit with the given status.  A status of zero (0) will be used if not provided.  If no result is specified in the
+callback at all then a status of zero (0) will also be used.
+
+=item signal
+
+ $proc->signal($signal);
+
+Terminate with the given signal.  C<$signal> can be either an integer value (in which case no validation that it is
+a real signal is done), or a string signal name like C<KILL>, C<HUP> or any signal supported by your operating
+system.  If you provide an invalid signal name an exception will be thrown.
+
+ proc_event( system => { signal => 9 } => sub {
+   my($proc, @args) = @_;
+   $proc->signal('KILL');
+ });
+
+Note that when you kill one of these faux processes with a signal you will want to update the expected signal
+check, as in the example above.
+
+=item errno
+
+ $proc->errno($errno);
+
+Simulate a failed C<system> call.  Most often C<system> will fail if the command is not found.  The C<$errno>
+passed in should be a valid C<errno> value.  On my system C<2> is the error code for command not found.  Example:
+
+ proc_event( system => { errno => number(2) } => sub {
+   my($proc, @args) = @_;
+   $proc->errno(2);
+ });
+
+=back
 
 =back
 
