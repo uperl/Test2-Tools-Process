@@ -9,6 +9,24 @@ use Test2::V0 -no_srand => 1;
 use Test2::Tools::Process;
 
 process {
+  system 'foo', 'bar';
+} [
+  # check tht the first system call is to
+  # a command foo with any arguments
+  proc_event(system => array {
+    item 'foo';
+    etc;
+  }, sub {
+    # simulate the foo command
+    my($proc, @args) = @_;
+    note "faux bar command: @args";
+    # simulate a notmsl exit
+    $proc->exit(0);
+  }),
+];
+
+
+process {
   exit 2;
   note 'not executed';
 } [
