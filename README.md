@@ -87,6 +87,11 @@ my $ok = process { ... } $test_name;
 my $ok = process { ... };
 ```
 
+Runs the block, intercepting `exit`, `exec`, `system`, `readpipe` and
+`qx//` calls.  The calls are then matched against `\@events` as the expected
+process events.  See `proc_event` below for defining individual events,
+and the synopsis above for examples.
+
 ## named\_signal
 
 ```perl
@@ -267,6 +272,14 @@ events will actually make a system call, unless a `$callback` is provided.
           $proc->errno(2);
         });
         ```
+
+    - type
+
+        ```perl
+        my $type = $proc->type;
+        ```
+
+        Returns `system` or `readpipe` depending on the Perl function that triggered the system call.
 
 # CAVEATS
 

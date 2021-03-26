@@ -247,7 +247,11 @@ subtest 'system' => sub {
     process {
       is system('hi'), 0;
       is $?, 0;
+      is `hi`, 'hello';
+      is $?, 0;
       is system('false','two','three'), 2560;
+      is $?, 2560;
+      is `false two three`, "haha";
       is $?, 2560;
       is system('signal'), 9;
       is $?, 9;
@@ -260,12 +264,26 @@ subtest 'system' => sub {
       proc_event(system => sub {
         my($proc, @args) = @_;
         isa_ok $proc, 'Test2::Tools::Process::SystemProc';
+        is $proc->type, 'system';
         is \@args, ['hi'];
+        $proc->exit;
+      }),
+      proc_event(system => sub {
+        my($proc, @args) = @_;
+        isa_ok $proc, 'Test2::Tools::Process::SystemProc';
+        is $proc->type, 'readpipe';
+        is \@args, ['hi'];
+        print "hello";
         $proc->exit;
       }),
       proc_event(system => { status => 10 }, sub {
         my($proc, @args) = @_;
         is \@args, ['false','two','three'];
+        $proc->exit(10);
+      }),
+      proc_event(system => { status => 10 }, sub {
+        my($proc, @args) = @_;
+        print "haha";
         $proc->exit(10);
       }),
       proc_event(system => { signal => 9 }, sub {

@@ -12,6 +12,7 @@ use Test2::Compare::Number    ();
 use Test2::Compare::String    ();
 use Test2::Compare::Custom    ();
 use Test2::Compare ();
+use Capture::Tiny qw( capture_stdout );
 use 5.008004;
 use base qw( Exporter );
 
@@ -64,6 +65,11 @@ BEGIN {
  my $ok = process { ... } $test_name;
  my $ok = process { ... };
 
+Runs the block, intercepting C<exit>, C<exec>, C<system>, C<readpipe> and
+C<qx//> calls.  The calls are then matched against C<\@events> as the expected
+process events.  See C<proc_event> below for defining individual events,
+and the synopsis above for examples.
+
 =cut
 
 sub process (&;@)
@@ -86,7 +92,7 @@ sub process (&;@)
 
     local %handlers = %handlers;
 
-    $handlers{exit} = sub (;$) {
+    $handlers{exit} = sub {
       my $expected = $expected[$i++];
 
       my $status = shift;
@@ -140,56 +146,67 @@ sub process (&;@)
       }
     };
 
-    $handlers{system} = sub {
-      my $expected = $expected[$i++];
+    foreach my $type (qw( system readpipe ))
+    {
+      $handlers{$type} = sub {
+        my $expected = $expected[$i++];
 
-      my $event;
-      my $args = \@_;
-      if(@_ == 1 || @_ == 0)
-      {
-        push @events, $event = { event_type => 'system', command => $_[0] };
-      }
-      else
-      {
-        push @events, $event = { event_type => 'system', command => [@_] };
-      }
-
-      if(defined $expected && $expected->is_system && defined $expected->callback)
-      {
-        Test2::Tools::Process::ReturnMultiLevel::with_return(sub {
-          my($return) = @_;
-          my $proc = Test2::Tools::Process::SystemProc->new($return, $event);
-          $expected->callback->($proc, @$args);
-          $event->{status} = 0;
-          $? = 0;
-        });
-        return -1 if exists $event->{errno};
-        return $?;
-      }
-      else
-      {
-        local $SIG{__WARN__} = sub {
-          my($message) = @_;
-          $message =~ s/ at .*? line [0-9]+\.$//;
-          chomp $message;
-          carp($message);
-        };
-        my $ret = CORE::system(@_);
-        if($? == -1)
+        my $event;
+        my $args = \@_;
+        if(@_ == 1 || @_ == 0)
         {
-          $event->{errno} = $!;
-        }
-        elsif($? & 127)
-        {
-          $event->{signal} = $? & 127;
+          push @events, $event = { event_type => 'system', command => $_[0] };
         }
         else
         {
-          $event->{status} = $? >> 8;
+          push @events, $event = { event_type => 'system', command => [@_] };
         }
-        return $ret;
-      }
-    };
+
+        if(defined $expected && $expected->is_system && defined $expected->callback)
+        {
+          my $inner = sub {
+            my($return) = @_;
+            my $proc = Test2::Tools::Process::SystemProc->new($return, $event, $type);
+            $expected->callback->($proc, @$args);
+            $event->{status} = 0;
+            $? = 0;
+          };
+          if($type eq 'system')
+          {
+            Test2::Tools::Process::ReturnMultiLevel::with_return($inner);
+            return -1 if exists $event->{errno};
+            return $?;
+          }
+          else
+          {
+            return scalar capture_stdout { Test2::Tools::Process::ReturnMultiLevel::with_return($inner) };
+          }
+        }
+        else
+        {
+          local $SIG{__WARN__} = sub {
+            my($message) = @_;
+            $message =~ s/ at .*? line [0-9]+\.$//;
+            chomp $message;
+            carp($message);
+          };
+          my $ret = $type eq 'system' ? CORE::system(@_) : CORE::readpipe(@_);
+          if($? == -1)
+          {
+            $event->{errno} = $!;
+          }
+          elsif($? & 127)
+          {
+            $event->{signal} = $? & 127;
+          }
+          else
+          {
+            $event->{status} = $? >> 8;
+          }
+          return $ret;
+        }
+      };
+    }
 
     $sub->();
   });
@@ -388,6 +405,12 @@ passed in should be a valid C<errno> value.  On my system C<2> is the error code
    $proc->errno(2);
  });
 
+=item type
+
+ my $type = $proc->type;
+
+Returns C<system> or C<readpipe> depending on the Perl function that triggered the system call.
+
 =back
 
 =back
@@ -566,12 +589,15 @@ package Test2::Tools::Process::SystemProc;
 
 sub new
 {
-  my($class, $return, $result) = @_;
+  my($class, $return, $result, $type) = @_;
   bless {
     return => $return,
     result => $result,
+    type   => $type,
   }, $class;
 }
+
+sub type { shift->{type} }
 
 sub exit
 {
