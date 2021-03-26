@@ -2,6 +2,7 @@ package Test::Exec;
 
 use strict;
 use warnings;
+use 5.010;
 use Test2::API qw( context );
 use Test2::Tools::Process ();
 use Test2::Tools::Process::ReturnMultiLevel qw( with_return );
