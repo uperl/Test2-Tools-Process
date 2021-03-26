@@ -2,6 +2,7 @@ package Test2::Tools::Process;
 
 use strict;
 use warnings;
+use 5.010;
 use Test2::Tools::Compare ();
 use Test2::API qw( context );
 use Ref::Util qw( is_plain_arrayref is_ref is_plain_coderef is_plain_hashref );
@@ -13,7 +14,6 @@ use Test2::Compare::String    ();
 use Test2::Compare::Custom    ();
 use Test2::Compare ();
 use Capture::Tiny qw( capture_stdout );
-use 5.008004;
 use base qw( Exporter );
 
 our @EXPORT = qw( process proc_event named_signal );
