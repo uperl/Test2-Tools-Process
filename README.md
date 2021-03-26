@@ -74,7 +74,8 @@ It also lets you test code that exits program flow without actually terminating 
 test.  So far it allows you to test and/or mock `exit`, `exec`, `system`, 
 `readpipe` and `qx//`.  Other process related tests will be added in the future.
 
-This module borrows some ideas from [Test::Exit](https://metacpan.org/pod/Test::Exit).
+This module borrows some ideas from [Test::Exit](https://metacpan.org/pod/Test::Exit).  In particular it does not use exceptions
+to simulate `exit` or `exec`, so you can freely test code that calls these in an `eval`.
 
 # FUNCTIONS
 
@@ -100,6 +101,24 @@ my $signame = named_signal $name;
 
 Given a string signal name like `KILL`, this will return the integer
 signal number.  It will throw an exception if the `$name` is invalid.
+
+## intercept\_exit
+
+```perl
+my $status = intercept_exit { ... };
+```
+
+Intercept any c&lt;exit> calls inside the block, and return the exit status.
+Returns `undef` if there were no `exec` calls.
+
+## intercept\_exec
+
+```perl
+my $arrayref = intercept_exec { ... };
+```
+
+Intercept any `exec` calls inside the block and return the command line that a was passed to it.
+Returns `undef` if there were no `exec` calls.
 
 # CHECKS
 

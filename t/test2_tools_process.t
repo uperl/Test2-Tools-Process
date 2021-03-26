@@ -317,4 +317,16 @@ subtest 'named signal' => sub {
 
 };
 
+subtest 'intercept exit and exec' => sub {
+
+
+  is intercept_exit { note 'nothing to intercept (exit)' }, U();
+  is intercept_exec { note 'nothing to intercept (exec)' }, U();
+
+  is intercept_exit { exit }, 0;
+  is intercept_exit { exit 2 }, 2;
+  is intercept_exec { exec 'foo','bar','baz' }, ['foo','bar','baz'];
+
+};
+
 done_testing;
