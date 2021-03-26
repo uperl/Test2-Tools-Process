@@ -25,7 +25,6 @@ process {
   }),
 ];
 
-
 process {
   exit 2;
   note 'not executed';
@@ -62,6 +61,12 @@ process {
   # the second exec will be emulated as successful
   proc_event('exec'),
 ];
+
+# just intercept `exit`
+is intercept_exit { exit 10 }, 10;
+
+# just intercept `exec`
+is intercept_exec { exec 'foo', 'bar', 'baz' }, ['foo','bar','baz'];
 
 done_testing;
 ```
