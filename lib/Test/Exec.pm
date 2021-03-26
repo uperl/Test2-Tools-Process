@@ -27,15 +27,6 @@ The concept was implementation was based on L<Test::Exit>, but applied to C<exec
 
 our @EXPORT = qw( exec_arrayref never_exec_ok );
 
-our $exec_handler;
-
-BEGIN {
-  my $orig = \&CORE::exec;
-  $exec_handler = sub { $orig->(@_) };
-  no warnings 'redefine';
-  *CORE::GLOBAL::exec = sub { $exec_handler->(@_) };
-}
-
 =head1 FUNCTIONS
 
 =head2 exec_arrayref
@@ -57,7 +48,7 @@ sub exec_arrayref(&)
 
   return with_return {
     my($return) = @_;
-    local $exec_handler = sub {
+    local $Test2::Tools::Process::handlers{exec} = sub {
       $last = [caller(1)];
       $return->([@_]);
     };
