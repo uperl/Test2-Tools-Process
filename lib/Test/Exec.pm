@@ -80,7 +80,7 @@ sub never_exec_ok (&;$)
 
   if(!$ok && $last)
   {
-    my($package, $filename, $line) = @$last;
+    my(undef, $filename, $line) = @$last;
     $ctx->diag("exec at $filename line $line");
   }
 

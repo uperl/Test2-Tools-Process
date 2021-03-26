@@ -16,7 +16,7 @@ use Test2::Compare ();
 use Capture::Tiny qw( capture_stdout );
 use base qw( Exporter );
 
-our @EXPORT = qw( process proc_event named_signal );
+our @EXPORT = qw( process proc_event named_signal intercept_exit intercept_exec );
 our @CARP_NOT = qw( Test2::Tools::Process::SystemProc );
 
 # ABSTRACT: Unit tests for code that calls exit, exec, system or qx()
@@ -34,7 +34,8 @@ It also lets you test code that exits program flow without actually terminating 
 test.  So far it allows you to test and/or mock C<exit>, C<exec>, C<system>, 
 C<readpipe> and C<qx//>.  Other process related tests will be added in the future.
 
-This module borrows some ideas from L<Test::Exit>.
+This module borrows some ideas from L<Test::Exit>.  In particular it does not use exceptions
+to simulate C<exit> or C<exec>, so you can freely test code that calls these in an C<eval>.
 
 =cut
 
@@ -251,6 +252,62 @@ signal number.  It will throw an exception if the C<$name> is invalid.
 
     $sig->{$name};
   }
+}
+
+=head2 intercept_exit
+
+ my $status = intercept_exit { ... };
+
+Intercept any c<exit> calls inside the block, and return the exit status.
+Returns C<undef> if there were no C<exec> calls.
+
+=cut
+
+sub intercept_exit (&)
+{
+  my $sub = shift;
+
+  my $ret;
+
+  Test2::Tools::Process::ReturnMultiLevel::with_return(sub {
+    my $return = shift;
+    local $handlers{exit} = sub {
+      $ret = shift;
+      $ret = 0 unless defined $ret;
+      $ret = int $ret;
+      $return->();
+    };
+    $sub->();
+  });
+
+  $ret;
+}
+
+=head2 intercept_exec
+
+ my $arrayref = intercept_exec { ... };
+
+Intercept any C<exec> calls inside the block and return the command line that a was passed to it.
+Returns C<undef> if there were no C<exec> calls.
+
+=cut
+
+sub intercept_exec (&)
+{
+  my $sub = shift;
+
+  my $ret;
+
+  Test2::Tools::Process::ReturnMultiLevel::with_return(sub {
+    my $return = shift;
+    local $handlers{exec} = sub {
+      $ret = \@_;
+      $return->();
+    };
+    $sub->();
+  });
+
+  $ret;
 }
 
 =head1 CHECKS
