@@ -738,6 +738,9 @@ This module installs handlers for C<exec>, C<exit>, C<system> and C<readpipe>, i
 the C<CORE::GLOBAL> namespace, so if your code is also installing handlers there
 then things might not work.
 
+This module is not apparently compatible with L<IPC::Run3>.  Use L<Capture::Tiny>
+instead, which is better maintained in my opinion.
+
 =head1 SEE ALSO
 
 =over 4

@@ -314,6 +314,9 @@ This module installs handlers for `exec`, `exit`, `system` and `readpipe`, in
 the `CORE::GLOBAL` namespace, so if your code is also installing handlers there
 then things might not work.
 
+This module is not apparently compatible with [IPC::Run3](https://metacpan.org/pod/IPC::Run3).  Use [Capture::Tiny](https://metacpan.org/pod/Capture::Tiny)
+instead, which is better maintained in my opinion.
+
 # SEE ALSO
 
 - [Test::Exit](https://metacpan.org/pod/Test::Exit)
