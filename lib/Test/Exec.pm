@@ -5,7 +5,7 @@ use warnings;
 use 5.010;
 use Test2::API qw( context );
 use Test2::Tools::Process ();
-use Test2::Tools::Process::ReturnMultiLevel qw( with_return );
+use Return::MultiLevel qw( with_return );
 use base 'Exporter';
 
 # ABSTRACT: Test that some code calls exec without terminating testing
