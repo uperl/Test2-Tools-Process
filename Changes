@@ -1,6 +1,8 @@
 Revision history for {{$dist->name}}},
 
 {{$NEXT}}
+  - Use Return::MultiLevel which should now install correctly,
+    and remove forked code that did same (gh#14, rt#133221)
 
 0.05      2021-03-26 16:18:21 -0600
   - initial version
