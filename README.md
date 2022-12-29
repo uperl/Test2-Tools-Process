@@ -1,4 +1,4 @@
-# Test2::Tools::Process ![linux](https://github.com/uperl/Test2-Tools-Process/workflows/linux/badge.svg) ![windows](https://github.com/uperl/Test2-Tools-Process/workflows/windows/badge.svg) ![macos](https://github.com/uperl/Test2-Tools-Process/workflows/macos/badge.svg) ![cygwin](https://github.com/uperl/Test2-Tools-Process/workflows/cygwin/badge.svg) ![msys2-mingw](https://github.com/uperl/Test2-Tools-Process/workflows/msys2-mingw/badge.svg)
+# Test2::Tools::Process ![linux](https://github.com/uperl/Test2-Tools-Process/workflows/linux/badge.svg) ![windows](https://github.com/uperl/Test2-Tools-Process/workflows/windows/badge.svg) ![macos](https://github.com/uperl/Test2-Tools-Process/workflows/macos/badge.svg) ![msys2-mingw](https://github.com/uperl/Test2-Tools-Process/workflows/msys2-mingw/badge.svg)
 
 Unit tests for code that calls exit, exec, system or qx()
 
