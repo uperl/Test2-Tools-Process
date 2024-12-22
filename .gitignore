@@ -2,4 +2,7 @@ Test2-Tools-Process-*
 /.build/
 *.swp
 
-
+/Test2-Tools-Process-*
+/.build
+*.old
+*.orig
