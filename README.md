@@ -1,4 +1,4 @@
-# Test2::Tools::Process ![linux](https://github.com/uperl/Test2-Tools-Process/workflows/linux/badge.svg) ![windows](https://github.com/uperl/Test2-Tools-Process/workflows/windows/badge.svg) ![macos](https://github.com/uperl/Test2-Tools-Process/workflows/macos/badge.svg) ![msys2-mingw](https://github.com/uperl/Test2-Tools-Process/workflows/msys2-mingw/badge.svg)
+# Test2::Tools::Process ![linux](https://github.com/uperl/Test2-Tools-Process/workflows/linux/badge.svg) ![windows](https://github.com/uperl/Test2-Tools-Process/workflows/windows/badge.svg) ![macos](https://github.com/uperl/Test2-Tools-Process/workflows/macos/badge.svg)
 
 Unit tests for code that calls exit, exec, system or qx()
 
@@ -341,7 +341,7 @@ Jeremy Mates (THRIG)
 
 # COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2015-2022 by Graham Ollis.
+This software is copyright (c) 2015-2024 by Graham Ollis.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.
